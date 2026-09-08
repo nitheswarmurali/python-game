@@ -1,0 +1,1 @@
+Place haarcascade_frontalface_default.xml in this folder to override OpenCV's bundled copy.
