@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vision Forge | Hybrid Detection</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="/"><span class="brand-mark">VF</span><span>Vision Forge</span></a>
+      <div class="top-status"><span class="status-dot"></span><span id="system-status">Checking models</span></div>
+    </header>
+
+    <section class="hero">
+      <div>
+        <p class="eyebrow">LOCAL COMPUTER VISION / 01</p>
+        <h1>See the frame<br><em>with more clarity.</em></h1>
+        <p class="lede">A focused detection studio pairing fast Haar face detection with free YOLO26 person awareness.</p>
+      </div>
+      <div class="hero-note"><span class="pulse"></span><span>Runs on your machine</span><strong>NO CLOUD UPLOADS</strong></div>
+    </section>
+
+    <section class="workspace">
+      <div class="stage-panel">
+        <div class="stage-head"><div><span class="kicker">LIVE CANVAS</span><h2 id="source-name">Awaiting a source</h2></div><span class="frame-chip" id="frame-state">STANDBY</span></div>
+        <div class="canvas-wrap"><div class="scanline"></div><img id="result-image" alt="Detection result"><div class="empty-state" id="empty-state"><span class="crosshair">+</span><b>Upload an image or start camera</b><small>Camera frames are analyzed locally and never saved</small></div></div>
+        <div class="stage-foot"><span id="output-name">No result saved</span><a id="download-link" class="download disabled" download="vision-result.jpg">Download result <span>↓</span></a></div>
+      </div>
+
+      <aside class="control-panel">
+        <div class="panel-block"><span class="kicker">SOURCE</span><div class="action-grid"><button class="primary" id="camera-button"><span>◉</span> Start camera</button><label class="upload-button"><span>↥</span> Upload from device<input type="file" id="file-input" accept="image/*"></label><div class="url-row"><input id="url-input" type="url" placeholder="Paste public image URL"><button id="url-button">Analyze URL</button></div></div><button class="stop-button" id="stop-button" disabled>Stop camera</button><label class="rate-row"><span>Target video rate</span><select id="fps-select"><option value="30">30 FPS</option><option value="60">60 FPS</option><option value="90">90 FPS</option></select></label></div>
+        <div class="panel-block"><span class="kicker">MODE MIX</span><label class="toggle-row"><span><b>Haar / face</b><small>Precise facial boxes</small></span><input type="checkbox" checked disabled><i></i></label><label class="toggle-row"><span><b>YOLO26 / person</b><small id="yolo-caption">Loading yolo26s.pt</small></span><input type="checkbox" id="yolo-toggle" checked><i></i></label></div>
+        <div class="panel-block metrics"><span class="kicker">SIGNAL</span><div class="metric"><span>Faces</span><strong id="faces-count">0</strong></div><div class="metric"><span>People</span><strong id="people-count">0</strong></div><div class="metric"><span>Throughput</span><strong><span id="fps-count">0</span><small> FPS</small></strong></div></div>
+        <div class="panel-block photos"><div class="activity-head"><span class="kicker">NEW FACE PHOTOS</span><strong><span id="capture-count">0</span> captured</strong></div><div id="capture-gallery" class="capture-gallery"></div><small class="photo-note">One photo per newly detected face in this camera session.</small></div>
+        <div class="panel-block activity"><div class="activity-head"><span class="kicker">ACTIVITY</span><a id="report-link" href="/api/report.csv">Export CSV</a></div><ul id="activity-list"><li><span></span>System ready</li></ul></div>
+      </aside>
+    </section>
+    <footer><span>VISION FORGE / HYBRID DETECTION</span><span>HAAR + YOLO26N</span></footer>
+  </main>
+  <video id="camera-video" autoplay playsinline></video>
+  <canvas id="capture-canvas"></canvas>
+  <script src="/static/app.js"></script>
+</body>
+</html>
