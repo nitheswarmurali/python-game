@@ -10,7 +10,6 @@ import os
 import socket
 import threading
 import time
-import uuid
 from urllib.parse import urlsplit
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -54,34 +53,6 @@ def _face_signature(frame: np.ndarray, face: tuple[int, int, int, int, float]) -
     gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
     gray = cv2.resize(gray, (32, 32), interpolation=cv2.INTER_AREA)
     return cv2.normalize(gray, None, 0, 1, cv2.NORM_MINMAX).astype(np.float32)
-
-
-def _capture_new_faces(frame: np.ndarray, faces: list[tuple[int, int, int, int, float]], track_id: str) -> list[dict[str, str]]:
-    """Save one cropped photo for each face not seen in this camera session."""
-    tracks = face_tracks.setdefault(track_id, [])
-    captures: list[dict[str, str]] = []
-    for face in faces:
-        signature = _face_signature(frame, face)
-        if signature is None:
-            continue
-        is_known = any(float(cv2.norm(signature, previous, cv2.NORM_L2)) < 8.0 for previous in tracks)
-        if is_known:
-            continue
-        x, y, width, height, _ = face
-        margin = int(max(width, height) * 0.2)
-        y1, y2 = max(0, y - margin), min(frame.shape[0], y + height + margin)
-        x1, x2 = max(0, x - margin), min(frame.shape[1], x + width + margin)
-        crop = frame[y1:y2, x1:x2]
-        name = f"face_{time.strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}.jpg"
-        path = ROOT / "output" / name
-        path.parent.mkdir(parents=True, exist_ok=True)
-        if not cv2.imwrite(str(path), crop) or not path.is_file():
-            LOGGER.warning("Unable to save face capture: %s", path)
-            continue
-        tracks.append(signature)
-        captures.append({"name": name, "url": f"/api/captures/{name}"})
-    del tracks[:-50]
-    return captures
 
 
 def _download_image(url: str) -> bytes:
@@ -144,18 +115,7 @@ def _process(payload: bytes, use_yolo: bool, save_output: bool = True) -> dict[s
         "people": people_count,
         "fps": round(1 / elapsed, 1),
         "output": output_name,
-        "captures": [],
     }
-
-
-@app.get("/api/captures/<name>")
-def capture(name: str):
-    """Serve a newly captured face photo from the output folder."""
-    safe_name = Path(name).name
-    path = ROOT / "output" / safe_name
-    if not path.is_file() or not safe_name.startswith("face_"):
-        return jsonify({"error": "Capture not found."}), 404
-    return send_file(path, mimetype="image/jpeg")
 
 
 @app.get("/")
@@ -181,12 +141,6 @@ def detect():
             payload = _download_image(image_url)
         save_output = request.form.get("save", "true").lower() == "true"
         result = _process(payload, request.form.get("yolo", "true").lower() == "true", save_output)
-        if request.form.get("capture", "false").lower() == "true":
-            frame = cv2.imdecode(np.frombuffer(payload, dtype=np.uint8), cv2.IMREAD_COLOR)
-            tracked_id = request.form.get("track_id", "default")[:80]
-            with detection_lock:
-                detected, _ = detector.detect(frame, use_yolo=False)
-            result["captures"] = _capture_new_faces(frame, detected.faces, tracked_id)
         return jsonify(result)
     except (ValueError, OSError, cv2.error) as error:
         return jsonify({"error": str(error)}), 400

@@ -13,8 +13,6 @@ let stream = null;
 let cameraTimer = null;
 let cameraRunning = false;
 let busy = false;
-const trackId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-
 const activity = (text) => {
   const item = document.createElement('li');
   item.innerHTML = '<span></span>' + text;
@@ -40,22 +38,6 @@ const render = (data, source) => {
   } else {
     download.classList.add('disabled');
   }
-  if (data.captures?.length) {
-    data.captures.forEach(addCapture);
-    activity(`${data.captures.length} new face photo${data.captures.length > 1 ? 's' : ''} captured`);
-  }
-};
-
-const addCapture = (capture) => {
-  const gallery = document.querySelector('#capture-gallery');
-  const card = document.createElement('a');
-  const captureUrl = capture.url.startsWith('http') ? capture.url : apiUrl(capture.url);
-  card.className = 'capture-card';
-  card.href = captureUrl;
-  card.target = '_blank';
-  card.innerHTML = `<img src="${captureUrl}" alt="New face capture"><span>${capture.name}</span>`;
-  gallery.prepend(card);
-  document.querySelector('#capture-count').textContent = gallery.children.length;
 };
 
 const analyze = async (blob, source, saveOutput = true) => {
@@ -65,10 +47,6 @@ const analyze = async (blob, source, saveOutput = true) => {
   form.append('file', blob, 'frame.jpg');
   form.append('yolo', yoloToggle.checked);
   form.append('save', saveOutput);
-  if (source === 'Browser camera') {
-    form.append('capture', true);
-    form.append('track_id', trackId);
-  }
   try {
     const response = await fetch(apiUrl('/api/detect'), {method: 'POST', body: form});
     const data = await response.json();
