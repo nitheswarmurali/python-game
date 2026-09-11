@@ -29,7 +29,6 @@ app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024
 allowed_origin = os.getenv("CORS_ORIGIN", "")
 detector = HybridDetector(os.getenv("YOLO_MODEL", "yolo26s.pt"))
 history: list[dict[str, object]] = []
-face_tracks: dict[str, list[dict[str, object]]] = {}
 detection_lock = threading.Lock()
 
 
@@ -41,18 +40,6 @@ def add_cors_headers(response):
         response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return response
-
-
-def _face_signature(frame: np.ndarray, face: tuple[int, int, int, int, float]) -> np.ndarray | None:
-    """Create a small normalized signature for matching a face between frames."""
-    x, y, width, height, _ = face
-    height_limit, width_limit = frame.shape[:2]
-    crop = frame[max(0, y):min(height_limit, y + height), max(0, x):min(width_limit, x + width)]
-    if crop.size == 0:
-        return None
-    gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
-    gray = cv2.resize(gray, (32, 32), interpolation=cv2.INTER_AREA)
-    return cv2.normalize(gray, None, 0, 1, cv2.NORM_MINMAX).astype(np.float32)
 
 
 def _download_image(url: str) -> bytes:
